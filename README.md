@@ -1,5 +1,4 @@
-# CooberGeneses
-
+<!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
@@ -65,19 +64,15 @@
         }
 
         .chat-send-button {
-            width: 20px;
-            height: 20px;
+            width: 40px;
+            height: 40px;
             border: none;
             background-color: #4CAF50;
             color: #fff;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 20px;
             margin-left: 10px;
-        }
-
-        .chat-send-button:focus {
-            outline: none;
         }
 
         .chat-options {
@@ -96,7 +91,7 @@
             <input type="text" class="chat-input" id="userInput" placeholder="Digite sua mensagem...">
             <button class="chat-send-button" onclick="sendMessage()">➤</button>
         </div>
-        <div class="chat-options" id="options">
+        <div class="chat-options">
             <button onclick="consultarRespostas()">Consultar Respostas</button>
             <div id="respostasSalvas" style="display:none;">
                 <h2>Respostas Salvas:</h2>
@@ -118,8 +113,6 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
-
     <script>
         var qaPairs = JSON.parse(localStorage.getItem('qaPairs')) || [];
 
@@ -140,68 +133,43 @@
             var chat = document.getElementById('chat');
             chat.innerHTML += botMessage;
             falarMensagemBot(message); // Fala a resposta
+            chat.scrollTop = chat.scrollHeight; // Rolagem automática para o fundo
         }
 
         function sendMessage() {
             var userInput = document.getElementById('userInput');
-            var message = userInput.value;
+            var message = userInput.value.trim();
+            if (!message) return; // Ignora mensagens vazias
+
             userInput.value = '';
 
             var chat = document.getElementById('chat');
             var userMessage = '<div class="chat-message user-message">' + message + '</div>';
             chat.innerHTML += userMessage;
+            chat.scrollTop = chat.scrollHeight; // Rolagem automática para o fundo
 
             if (qaPairs.length > 0) {
-                var foundAnswer = false;
-                for (var i = 0; i < qaPairs.length; i++) {
-                    var qaPair = qaPairs[i];
-                    if (qaPair.question.toLowerCase() === message.toLowerCase()) {
-                        generateBotResponse(qaPair.answer);
-                        foundAnswer = true;
-                        break;
-                    }
-                }
-                if (!foundAnswer) {
-                    if (isMathExpression(message)) {
-                        var result = calculateMathExpression(message);
-                        generateBotResponse('O resultado é ' + result);
-                    } else {
-                        askHowToProceed(message);
-                    }
+                var foundAnswer = qaPairs.find(qaPair => qaPair.question.toLowerCase() === message.toLowerCase());
+                if (foundAnswer) {
+                    generateBotResponse(foundAnswer.answer);
+                } else {
+                    askHowToProceed(message);
                 }
             } else {
                 askHowToProceed(message);
             }
         }
 
-        function isMathExpression(message) {
-            var regex = /^[\d+\-*/\s()]+$/;
-            return regex.test(message);
-        }
-
-        function calculateMathExpression(expression) {
-            try {
-                return eval(expression);
-            } catch (error) {
-                return 'Desculpe, não consigo calcular isso.';
-            }
-        }
-
         function askHowToProceed(question) {
-            var chat = document.getElementById('chat');
-            var botMessage = '<div class="chat-message bot-message">Como proceder com esta informação?</div>';
-            chat.innerHTML += botMessage;
-
-            var questionPanel = document.getElementById('questionPanel');
-            questionPanel.style.display = 'block';
+            generateBotResponse("Como proceder com esta informação?");
             document.getElementById('questionText').value = question;
+            document.getElementById('questionPanel').style.display = 'block';
         }
 
         function submitQuestion() {
             var questionText = document.getElementById('questionText').value;
-            var answerPanel = document.getElementById('answerPanel');
-            answerPanel.style.display = 'block';
-            answerPanel.scrollIntoView();
+            document.getElementById('answerPanel').style.display = 'block';
+            document.getElementById('answerText').focus();
         }
 
         function submitAnswer() {
@@ -211,14 +179,10 @@
             qaPairs.push({ question: question, answer: answer });
             localStorage.setItem('qaPairs', JSON.stringify(qaPairs));
 
-            var chat = document.getElementById('chat');
-            var botMessage = '<div class="chat-message bot-message">Obrigado por me ensinar!</div>';
-            chat.innerHTML += botMessage;
+            generateBotResponse('Obrigado por me ensinar!');
 
-            var questionPanel = document.getElementById('questionPanel');
-            var answerPanel = document.getElementById('answerPanel');
-            questionPanel.style.display = 'none';
-            answerPanel.style.display = 'none';
+            document.getElementById('questionPanel').style.display = 'none';
+            document.getElementById('answerPanel').style.display = 'none';
         }
 
         function consultarRespostas() {
@@ -226,15 +190,13 @@
             respostasList.innerHTML = '';
 
             if (qaPairs.length > 0) {
-                for (var i = 0; i < qaPairs.length; i++) {
-                    var qaPair = qaPairs[i];
+                qaPairs.forEach(qaPair => {
                     var listItem = document.createElement('li');
                     listItem.innerText = 'Pergunta: ' + qaPair.question + ' - Resposta: ' + qaPair.answer;
                     respostasList.appendChild(listItem);
-                }
+                });
 
-                var respostasSalvas = document.getElementById('respostasSalvas');
-                respostasSalvas.style.display = 'block';
+                document.getElementById('respostasSalvas').style.display = 'block';
             } else {
                 alert('Nenhuma resposta salva ainda.');
             }
@@ -242,4 +204,3 @@
     </script>
 </body>
 </html>
-
